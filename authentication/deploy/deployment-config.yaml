@@ -1,0 +1,11 @@
+#Create Config Map
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: users-db-config
+  namespace: egs7
+data:
+  MYSQL_DATABASE: users
+  MYSQL_ROOT_PASSWORD: root
+  MYSQL_USER: rodrigo
+  MYSQL_PASSWORD: password

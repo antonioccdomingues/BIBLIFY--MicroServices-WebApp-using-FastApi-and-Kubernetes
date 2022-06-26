@@ -1,0 +1,16 @@
+#To build: sudo docker build -t registry.deti:5000/biblify/db-users:21062022 -f deploy/Dockerfile.db .
+#To add to registry: sudo docker push registry.deti:5000/biblify/db-users:21062022
+
+#To build: sudo docker build -t registry.deti:5000/biblify/authapi:22062022 -f deploy/Dockerfile.api .
+#To add to registry: sudo docker push registry.deti:5000/biblify/authapi:22062022	
+
+
+FROM mysql:8.0.21
+
+MAINTAINER Rodrigo Santos
+
+LABEL version="1.0"
+
+ADD src/init.sql /docker-entrypoint-initdb.d/
+
+EXPOSE 3306

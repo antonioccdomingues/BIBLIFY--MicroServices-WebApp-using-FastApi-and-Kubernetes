@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stock
+  namespace: egs7
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: stock
+  template:
+    metadata:
+      labels:
+        app: stock
+    spec:
+      containers:
+      - name: stock
+        image: registry.deti:5000/egs7/stock-api:2022062204
+        ports:
+          - containerPort: 8000
+        env:
+          - name: POSTGRES_USER
+            value: user123
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-user-pass
+                key: password 
+          - name: SERVICE
+            value: "stock-db:5432"
+
+
+

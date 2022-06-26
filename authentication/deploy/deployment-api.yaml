@@ -1,0 +1,73 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authapi
+  namespace: egs7
+spec:
+  selector:
+    matchLabels:
+      app: authapi
+  template:
+    metadata:
+      labels:
+        app: authapi
+    spec:
+      containers:
+      - name: api
+        image: registry.deti:5000/biblify/authapi:22062022
+        resources:
+          requests:
+            memory: "250Mi"
+            cpu: "500m"
+          limits:
+            memory: "500Mi"
+            cpu: "1000m"
+        ports:
+        - containerPort: 8000
+          name: authpi
+        #volumeMounts:
+        #- name: db-secrets
+          #mountPath: "/tmp/secrets"
+          #readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authapi
+  namespace: egs7
+spec:
+  ports:
+  - port: 8000
+    protocol: TCP
+    name: authapi
+  selector:
+    app: authapi
+  type: NodePort
+  
+---
+apiVersion: v1
+kind: Ingress
+metadata:
+  name: authapi
+  namespace: egs7
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/frontend-entry-points: http,https
+    traefik.ingress.kubernetes.io/redirect-entry-point: https
+    traefik.ingress.kubernetes.io/redirect-permanent: "true"
+    traefik.ingress.kubernetes.io/custom-response-headers: "Access-Control-Allow-Origin:*||Access-Control-Allow-Methods:GET,POST,OPTIONS||Access-Control-Allow-Headers:DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range||Access-Control-Expose-Headers:Content-Length,Content-Range"
+
+spec:
+  rules:
+  - host: biblify-auth.k3s/
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: stock
+            port: 
+              number: 8000
+

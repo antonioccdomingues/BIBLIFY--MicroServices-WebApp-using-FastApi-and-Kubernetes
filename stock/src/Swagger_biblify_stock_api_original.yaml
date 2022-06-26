@@ -1,0 +1,983 @@
+---
+swagger: "2.0"
+info:
+  description: |
+    This is a sample Biblify stock server .
+  version: 1.0.0
+  title: Swagger Biblify Stock v1
+  termsOfService: http://swagger.io/terms/
+  contact:
+    email: apiteam@swagger.io
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+host: virtserver.swaggerhub.com
+basePath: /biblify/stock/1.0.0
+tags:
+- name: book
+  description: Everything about book
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
+- name: author
+  description: info about authors
+- name: publisher
+  description: info about publishers
+- name: order
+  description: info about loans
+- name: category
+  description: books genres and classifications
+  externalDocs:
+    description: Find out more about
+    url: http://swagger.io
+schemes:
+- https
+- http
+paths:
+  /v1/books:
+    get:
+      tags:
+      - book
+      summary: Search for books
+      description: Titles with comma separated strings, author or category can be provided
+      operationId: findBooks
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: Title
+        in: query
+        description: Titles that need to be considered for filter
+        required: false
+        type: array
+        items:
+          type: string
+          pattern: ^[a-zA-Z0-9 ]*$
+        collectionFormat: csv
+      - name: Author
+        in: query
+        description: Author of the book
+        required: false
+        type: string
+        pattern: ^[a-zA-Z ]*$
+      - name: category
+        in: query
+        description: category of the book
+        required: false
+        type: string
+        pattern: ^[a-zA-Z ]*$
+      security:
+      - api_key: []
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Book'
+        "400":
+          description: Invalid parameters value
+        "404":
+          description: No books found
+    post:
+      tags:
+      - book
+      summary: Add a new book
+      operationId: addBook
+      consumes:
+      - application/json
+      - application/xml
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - in: body
+        name: body
+        description: Book object that needs to be added to the stock
+        required: true
+        schema:
+          $ref: '#/definitions/Book'
+      security:
+      - biblify_auth:
+        - write:books
+        - read:books
+      responses:
+        "201":
+          description: CREATED
+        "400":
+          description: BAD REQUEST
+        "401":
+          description: UNAUTHORIZED
+        "405":
+          description: Invalid input
+  /v1/book/{bookId}:
+    get:
+      tags:
+      - book
+      summary: Find book by ID
+      description: Returns a single book
+      operationId: getBookById
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: bookId
+        in: path
+        description: ID of book to return
+        required: true
+        type: integer
+        format: int64
+      security:
+      - api_key: []
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/Book'
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Book not found
+    put:
+      tags:
+      - book
+      summary: Updates a book in the stock with form data
+      operationId: updateBookWithForm
+      consumes:
+      - application/x-www-form-urlencoded
+      - multipart/form-data
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: bookId
+        in: path
+        description: ID of book that needs to be updated
+        required: true
+        type: integer
+        format: int64
+      - name: name
+        in: formData
+        description: Updated name of the book
+        required: false
+        type: string
+      - name: amountInStock
+        in: formData
+        description: Updated amount in stock of the book
+        required: false
+        type: integer
+        format: int64
+      - name: amountReserved
+        in: formData
+        description: Update amount reserved of the book
+        required: false
+        type: integer
+        format: int64
+      - name: additionalMetadata
+        in: formData
+        description: Additional data to pass to server
+        required: false
+        type: string
+      - name: file
+        in: formData
+        description: file to upload
+        required: false
+        type: file
+      security:
+      - biblify_auth:
+        - write:books
+        - read:books
+      responses:
+        "200":
+          description: Updated successfully
+        "404":
+          description: Invalid book ID
+        "405":
+          description: Invalid input
+    delete:
+      tags:
+      - book
+      summary: Deletes a book
+      operationId: deleteBook
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: api_key
+        in: header
+        required: false
+        type: string
+      - name: bookId
+        in: path
+        description: Book id to delete
+        required: true
+        type: integer
+        format: int64
+      security:
+      - biblify_auth:
+        - write:books
+        - read:books
+      responses:
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Book not found
+        "200":
+          description: Deleted successfully
+  /v1/book/{bookId}/availability:
+    get:
+      tags:
+      - book
+      summary: Find available amount of the given book ID
+      description: Returns a number of available copies
+      operationId: getBookAvailabilityById
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: bookId
+        in: path
+        description: ID of book
+        required: true
+        type: integer
+        format: int64
+      security:
+      - api_key: []
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            type: object
+            additionalProperties:
+              type: integer
+              format: int32
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Book not found
+  /v1/author:
+    get:
+      tags:
+      - author
+      summary: Returns existing authors
+      description: provide the name to filter results
+      operationId: findAuthor
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: Name
+        in: query
+        description: Name of author
+        required: false
+        type: string
+        pattern: ^[a-zA-Z0-9 ]*$
+      security:
+      - api_key: []
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Author'
+        "400":
+          description: Invalid name
+        "404":
+          description: No author found
+    post:
+      tags:
+      - author
+      summary: Add a new author
+      operationId: addAuthor
+      consumes:
+      - application/json
+      - application/xml
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - in: body
+        name: body
+        description: author object that needs to be added
+        required: true
+        schema:
+          $ref: '#/definitions/Author'
+      security:
+      - biblify_auth:
+        - write:authors
+        - read:authors
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "405":
+          description: Invalid input
+  /v1/author/{id}:
+    get:
+      tags:
+      - author
+      summary: Find author by ID
+      description: Returns a single author
+      operationId: getAuthorById
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: id
+        in: path
+        description: ID of author to return
+        required: true
+        type: integer
+        format: int64
+      security:
+      - api_key: []
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/Author'
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: author not found
+    put:
+      tags:
+      - author
+      summary: Update an existing author
+      operationId: updateAuthor
+      consumes:
+      - application/json
+      - application/xml
+      - multipart/form-data
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: id
+        in: path
+        description: ID of author to return
+        required: true
+        type: integer
+        format: int64
+      - name: name
+        in: formData
+        description: Updated name
+        required: false
+        type: string
+      security:
+      - biblify_auth:
+        - write:authors
+        - read:authors
+      responses:
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Author not found
+        "405":
+          description: Validation exception
+    delete:
+      tags:
+      - author
+      summary: Deletes a author
+      operationId: deleteAuthor
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: api_key
+        in: header
+        required: false
+        type: string
+      - name: id
+        in: path
+        description: author id to delete
+        required: true
+        type: integer
+        format: int64
+      security:
+      - biblify_auth:
+        - write:authors
+        - read:authors
+      responses:
+        "200":
+          description: Ok
+        "400":
+          description: Invalid ID supplied
+        "401":
+          description: Unauthorized
+        "404":
+          description: author not found
+  /v1/publisher:
+    get:
+      tags:
+      - publisher
+      summary: Returns existing publishers
+      description: provide the name to filter results
+      operationId: findPublisher
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: Name
+        in: query
+        description: Name of publisher
+        required: false
+        type: string
+        pattern: ^[a-zA-Z0-9 ]*$
+      security:
+      - api_key: []
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Publisher'
+        "400":
+          description: Invalid name
+        "404":
+          description: No publisher found
+    post:
+      tags:
+      - publisher
+      summary: Add a new publisher
+      operationId: addPublisher
+      consumes:
+      - application/json
+      - application/xml
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - in: body
+        name: body
+        description: publisher object that needs to be added
+        required: true
+        schema:
+          $ref: '#/definitions/Publisher'
+      security:
+      - biblify_auth:
+        - write:authors
+        - read:authors
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "405":
+          description: Invalid input
+  /v1/publisher/{id}:
+    get:
+      tags:
+      - publisher
+      summary: Find publisher by ID
+      description: Returns a single publisher
+      operationId: getPublisherById
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: id
+        in: path
+        description: ID of publisher to return
+        required: true
+        type: integer
+        format: int64
+      security:
+      - api_key: []
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/Publisher'
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: publisher not found
+    put:
+      tags:
+      - publisher
+      summary: Update an existing publisher
+      operationId: updatePublisher
+      consumes:
+      - application/json
+      - application/xml
+      - multipart/form-data
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: id
+        in: path
+        description: ID of publisher to return
+        required: true
+        type: integer
+        format: int64
+      - name: name
+        in: formData
+        description: Updated name
+        required: false
+        type: string
+      security:
+      - biblify_auth:
+        - write:authors
+        - read:authors
+      responses:
+        "200":
+          description: Ok
+        "400":
+          description: Invalid ID supplied
+        "401":
+          description: Unauthorized
+        "404":
+          description: publisher not found
+        "405":
+          description: Validation exception
+    delete:
+      tags:
+      - publisher
+      summary: Deletes a publisher
+      operationId: deletePublisher
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: api_key
+        in: header
+        required: false
+        type: string
+      - name: id
+        in: path
+        description: publisher id to delete
+        required: true
+        type: integer
+        format: int64
+      security:
+      - biblify_auth:
+        - write:authors
+        - read:authors
+      responses:
+        "200":
+          description: Ok
+        "400":
+          description: Invalid ID supplied
+        "401":
+          description: Unauthorized
+        "404":
+          description: publisher not found
+  /v1/category:
+    get:
+      tags:
+      - category
+      summary: Returns existing categories
+      description: provide the name to filter results
+      operationId: findCategory
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: Name
+        in: query
+        description: Name of category
+        required: false
+        type: string
+        pattern: ^[a-zA-Z0-9 ]*$
+      security:
+      - api_key: []
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Category'
+        "400":
+          description: Invalid name
+        "404":
+          description: No category found
+    post:
+      tags:
+      - category
+      summary: Add a new category
+      operationId: addCategory
+      consumes:
+      - application/json
+      - application/xml
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - in: body
+        name: body
+        description: category object that needs to be added
+        required: true
+        schema:
+          $ref: '#/definitions/Category'
+      security:
+      - biblify_auth:
+        - write:authors
+        - read:authors
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "405":
+          description: Invalid input
+  /v1/category/{id}:
+    delete:
+      tags:
+      - category
+      summary: Deletes a category
+      operationId: deleteCategory
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: api_key
+        in: header
+        required: false
+        type: string
+      - name: id
+        in: path
+        description: category id to delete
+        required: true
+        type: integer
+        format: int64
+      security:
+      - biblify_auth:
+        - write:authors
+        - read:authors
+      responses:
+        "201":
+          description: Created
+        "401":
+          description: Unauthorized
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: category not found
+  /v1/orders:
+    get:
+      tags:
+      - order
+      summary: Returns existing loans
+      description: Can provide book id, title, requester id, status, start and end date to filter results
+      operationId: findOrder
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: bookId
+        in: query
+        description: Ids of books
+        required: false
+        type: array
+        items:
+          type: integer
+          format: int64
+        collectionFormat: csv
+      - name: bookTitle
+        in: query
+        description: Title of the book
+        required: false
+        type: string
+        pattern: ^[a-zA-Z0-9 ]*$
+      - name: requester
+        in: query
+        description: Id of requester
+        required: false
+        type: integer
+        format: int64
+      - name: status
+        in: query
+        description: Loan status
+        required: false
+        type: string
+        enum:
+        - request submitted
+        - available for pick up
+        - checked out
+        - finished
+      - name: beginDate
+        in: query
+        description: loan start date
+        required: false
+        type: string
+        format: date-time
+      - name: endDate
+        in: query
+        description: loan end date
+        required: false
+        type: string
+        format: date-time
+      security:
+      - api_key: []
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Order'
+        "404":
+          description: No order found
+        "400":
+          description: Bad Request
+    post:
+      tags:
+      - order
+      summary: Places an order for a loan
+      operationId: placeOrder
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - in: body
+        name: body
+        description: order for loan placed
+        required: true
+        schema:
+          $ref: '#/definitions/Order'
+      security:
+      - biblify_auth:
+        - write:orders
+        - read:orders
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/Order'
+        "400":
+          description: Invalid Order
+        "401":
+          description: Unauthorized
+  /v1/order/{orderId}:
+    get:
+      tags:
+      - order
+      summary: Find order by ID
+      description: Get info about loan by Id
+      operationId: getOrderById
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: orderId
+        in: path
+        description: ID of loan that needs to be fetched
+        required: true
+        type: integer
+        format: int64
+      security:
+      - api_key: []
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/Order'
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Order not found
+    delete:
+      tags:
+      - order
+      summary: Delete loan order by ID
+      description: Delete info abou loan
+      operationId: deleteOrder
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: orderId
+        in: path
+        description: ID of the order that needs to be deleted
+        required: true
+        type: integer
+        format: int64
+      security:
+      - biblify_auth:
+        - write:orders
+        - read:orders
+      responses:
+        "200":
+          description: ok
+        "401":
+          description: Unauthorized
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Order not found
+securityDefinitions:
+  biblify_auth:
+    type: oauth2
+    authorizationUrl: http://biblify.swagger.io/oauth/dialog
+    flow: implicit
+    scopes:
+      write:books: modify books
+      read:books: read books
+      write:authors: modify authors
+      read:authors: read authors
+      write:orders: write orders
+      read:orders: read orders
+  api_key:
+    type: apiKey
+    name: api_key
+    in: header
+definitions:
+  Order:
+    type: object
+    required:
+    - bookId
+    - id
+    - requester
+    properties:
+      id:
+        type: integer
+        format: int64
+      bookId:
+        type: integer
+        format: int64
+      requester:
+        $ref: '#/definitions/User'
+      status:
+        type: string
+        description: Order Status
+        enum:
+        - request submitted
+        - available for pick up
+        - checked out
+        - finished
+      beginDate:
+        type: string
+        format: date-time
+      endDate:
+        type: string
+        format: date-time
+      complete:
+        type: boolean
+        default: false
+    xml:
+      name: Order
+  Category:
+    type: object
+    required:
+    - id
+    - name
+    properties:
+      id:
+        type: integer
+        format: int64
+      name:
+        type: string
+    xml:
+      name: Category
+  Author:
+    type: object
+    required:
+    - id
+    - name
+    properties:
+      id:
+        type: integer
+        format: int64
+      name:
+        type: string
+    xml:
+      name: Author
+  Publisher:
+    type: object
+    required:
+    - id
+    - name
+    properties:
+      id:
+        type: integer
+        format: int64
+      name:
+        type: string
+        example: Scholastic Inc.
+    xml:
+      name: Publisher
+  User:
+    type: object
+    properties:
+      userId:
+        type: integer
+        format: int64
+      email:
+        type: string
+      name:
+        type: string
+    xml:
+      name: User
+  Book:
+    type: object
+    required:
+    - amountInStock
+    - amountReserved
+    - authors
+    - bookId
+    - categories
+    - name
+    properties:
+      bookId:
+        type: integer
+        format: int64
+      name:
+        type: string
+        example: Harry Potter and the Order of the Phoenix
+      authors:
+        type: array
+        items:
+          $ref: '#/definitions/Author'
+      categories:
+        type: array
+        items:
+          $ref: '#/definitions/Category'
+      pictureUrls:
+        type: array
+        xml:
+          name: pictureUrl
+          wrapped: true
+        items:
+          type: string
+      edition:
+        type: string
+        example: The Illustrated Edition (Harry Potter, Book 5)
+      publisher:
+        $ref: '#/definitions/Publisher'
+      date:
+        type: string
+        format: date
+        example: 2017-01-01
+      amountInStock:
+        type: integer
+        format: int64
+      amountReserved:
+        type: integer
+        format: int64
+    xml:
+      name: Book
+  ApiResponse:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      type:
+        type: string
+      message:
+        type: string
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io

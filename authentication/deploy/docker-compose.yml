@@ -1,0 +1,23 @@
+#To run and build in authentication dir: sudo docker-compose -f deploy/docker-compose.yml  up --build
+#To run without build: sudo docker-compose -f deploy/docker-compose.yml  up
+
+version: "3"
+services:
+    api:
+        container_name: api
+        links:
+            - db
+        image: api
+        build:
+          context: ..
+          dockerfile: deploy/Dockerfile.api
+        ports:
+            - "8000:8000"
+    db:
+        container_name: db
+        image: mysql:8.0.21
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+        volumes:
+            - ../db/entry:/docker-entrypoint-initdb.d/:ro
+            - ../db/data:/var/lib/mysql

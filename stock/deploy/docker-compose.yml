@@ -1,0 +1,53 @@
+version: '3.7'
+
+services:
+
+  web:
+    container_name: web
+    image: nginx:alpine
+    depends_on:
+      - stock
+    ports:
+      - "80:80"
+    volumes:
+      - ../src/web/conf.d:/etc/nginx/conf.d
+    networks:
+      - nginx_network
+
+  db:
+    image: postgres:12.0-alpine
+    volumes:
+      - ./postgres/init_scripts:/docker-entrypoint-initdb.d
+      - ./postgres/data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=user123
+      - POSTGRES_PASSWORD=password123
+      - POSTGRES_DB=stock
+    expose: 
+      - 5432
+    networks:
+      - nginx_network
+
+  stock:
+    image: stock_api:latest
+    build: 
+      context: ../src
+      dockerfile: Dockerfile
+    command: bash -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --reload"
+    expose:
+      - 8000
+    depends_on:
+      - db
+    environment:
+      POSTGRES_USER: "user123"
+      POSTGRES_PASSWORD : "password123"
+      SERVICE: "db"
+    networks:
+      - nginx_network
+
+
+networks:
+  nginx_network:
+    driver: bridge
+
+

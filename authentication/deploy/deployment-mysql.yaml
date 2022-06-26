@@ -1,0 +1,65 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-db
+  namespace: egs7
+spec:
+  selector:
+    matchLabels:
+      app: users-db
+  template:
+    metadata:
+      labels:
+        app: users-db
+    spec:
+      containers:
+      - name: users-db
+        image: registry.deti:5000/biblify/db-users:21062022
+        ports:
+        - containerPort: 3306
+          name: users-db
+        volumeMounts:
+          - name: mysql-pv-claim
+            mountPath: /var/lib/mysql
+        env:
+        - name: MYSQL_DATABASE
+          value: users
+        - name: MYSQL_ROOT_PASSWORD
+          value: root
+        - name: MYSQL_USER
+          value: rodrigo
+        - name: MYSQL_PASSWORD
+          value: password
+      volumes:
+        - name: mysql-pv-claim
+          persistentVolumeClaim:
+            claimName: mysql-pv-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: users-db
+  namespace: egs7
+spec:
+  ports:
+  - port: 3306
+    protocol: TCP
+    name: users-db
+  selector:
+    app: users-db
+  type: NodePort
+  
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+  namespace: egs7
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 500Mi 
