@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: biblify-frontend
-        image: registry.deti:5000/biblify/frontend:2022062201
+        image: registry.deti:5000/biblify/frontend:2022062201 #image tag and name
         ports:
         - containerPort: 8081
 ---
