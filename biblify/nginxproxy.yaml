@@ -18,6 +18,13 @@ spec:
     spec:
       containers:
         - image: nginx:alpine
+                # resources:
+		#   requests:
+		#     memory: "32Mi"
+		#     cpu: "10m"
+		#   limits:
+		#     memory: "128Mi"
+		#     cpu: "500m"
           name: nginx
           ports:
             - containerPort: 80
